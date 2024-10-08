@@ -37,14 +37,37 @@
             border: none;
             border-radius: 5px;
         }
+        #guess-form {
+            margin-bottom: 20px;
+        }
+        #guess-input {
+            padding: 5px;
+            font-size: 1em;
+        }
+        #submit-guess {
+            padding: 5px 10px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+        }
+        #result {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <h1>GeoGuessr Clone</h1>
-    <div id="location-info">
-        Can you guess where this is? (Answer: {{ city }}, {{ country }})
-    </div>
     <div id="mly"></div>
+    <div id="guess-form">
+        <input type="text" id="guess-input" placeholder="Enter your guess">
+        <button id="submit-guess">Submit Guess</button>
+    </div>
+    <div id="result"></div>
     <button id="new-location-btn" onclick="window.location.reload();">New Location</button>
 
     <script>
@@ -53,6 +76,25 @@
             accessToken: 'API_KEY_HERE',
             container: 'mly',
             imageId: '{{ image }}',
+        });
+
+        const city = "{{ city }}";
+        const country = "{{ country }}";
+        const submitGuess = document.getElementById('submit-guess');
+        const guessInput = document.getElementById('guess-input');
+        const result = document.getElementById('result');
+
+        submitGuess.addEventListener('click', () => {
+            const guess = guessInput.value.trim().toLowerCase();
+            const actualLocation = `${city}, ${country}`.toLowerCase();
+            
+            if (guess === actualLocation) {
+                result.textContent = "Correct! Well done!";
+                result.style.color = "green";
+            } else {
+                result.textContent = `Sorry, the correct answer was ${city}, ${country}.`;
+                result.style.color = "red";
+            }
         });
     </script>
 </body>
