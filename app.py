@@ -1,23 +1,57 @@
 from flask import Flask, render_template
 import requests
 import json
+import random
+import os
+from dotenv import load_load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
+
+# Mapillary API configuration
 base_url = "https://graph.mapillary.com/images"
-access_token = "API_KEY_HERE"
-bbox = "6.1475,46.2078,6.1477,46.2080"
-params = {
-    "access_token": access_token,
-    "fields": "id",
-    "bbox": bbox
-}
+access_token = os.getenv("MAPILLARY_ACCESS_TOKEN")
+
+# Load capitals data
+with open('capitals.csv', 'r') as f:
+    capitals = f.readlines()[1:]  # Skip header
+
+def generate_bbox(lat, lon, delta=0.002):
+    """Generate a bounding box around given coordinates."""
+    return f"{float(lat)-delta},{float(lon)-delta},{float(lat)+delta},{float(lon)+delta}"
 
 @app.route('/')
-def login():
-    x = requests.get(base_url, params=params)
-    parsed_data = json.loads(x.text)
-    image = parsed_data['data'][0]['id']
-    return render_template('index.html', image=image)
+def index():
+    # Select a random capital
+    capital = random.choice(capitals).strip().split(',')
+    city, country, lat, lon = capital
+
+    # Generate bounding box
+    bbox = generate_bbox(lat, lon)
+
+    # Set up API request parameters
+    params = {
+        "access_token": access_token,
+        "fields": "id",
+        "bbox": bbox
+    }
+
+    try:
+        # Make API request
+        response = requests.get(base_url, params=params)
+        response.raise_for_status()  # Raise an exception for bad responses
+        parsed_data = response.json()
+
+        if parsed_data['data']:
+            image_id = parsed_data['data'][0]['id']
+            return render_template('index.html', image=image_id, city=city, country=country)
+        else:
+            return "No image found for this location. Try again!"
+
+    except requests.RequestException as e:
+        return f"An error occurred: {str(e)}"
 
 if __name__ == '__main__':
     app.run(debug=True)
