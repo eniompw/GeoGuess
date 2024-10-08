@@ -53,6 +53,13 @@ This is a simple GeoGuessr-like web application that displays random street view
 
 This project uses a Mapillary access token. Make sure to keep your access token secure by using environment variables and not exposing it in public repositories.
 
+## Additional Improvement Ideas
+
+- Implement caching for capitals data in `app.py`
+- Add a custom 404 error handler
+- Create a form in `index.html` for users to submit their guesses
+- Add a map view to show the correct location after guessing
+
 ## Future Improvements
 
 - Add a scoring system
