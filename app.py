@@ -31,6 +31,9 @@ def index():
     # Select a random capital
     capital = random.choice(capitals).strip().split(',')
     city, country, lat, lon = capital
+    
+    # Print the city for debugging
+    print(f"Debug: Selected city is {city}")
 
     # Generate bounding box
     bbox = generate_bbox(lat, lon)
