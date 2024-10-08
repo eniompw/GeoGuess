@@ -3,7 +3,7 @@ import requests
 import json
 import random
 import os
-from dotenv import load_load_dotenv
+from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
@@ -14,9 +14,12 @@ app = Flask(__name__)
 base_url = "https://graph.mapillary.com/images"
 access_token = os.getenv("MAPILLARY_ACCESS_TOKEN")
 
-# Load capitals data
-with open('capitals.csv', 'r') as f:
-    capitals = f.readlines()[1:]  # Skip header
+# Load and cache capitals data
+def load_capitals():
+    with open('capitals.csv', 'r') as f:
+        return f.readlines()[1:]  # Skip header
+
+capitals = load_capitals()
 
 def generate_bbox(lat, lon, delta=0.002):
     """Generate a bounding box around given coordinates."""
@@ -52,6 +55,10 @@ def index():
 
     except requests.RequestException as e:
         return f"An error occurred: {str(e)}"
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
 
 if __name__ == '__main__':
     app.run(debug=True)
