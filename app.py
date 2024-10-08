@@ -22,7 +22,7 @@ def load_capitals():
 
 capitals = load_capitals()
 
-def generate_bbox(lat, lon, delta=0.005):
+def generate_bbox(lat, lon, delta=0.002):
     """Generate a bounding box around given coordinates."""
     return f"{float(lat)-delta},{float(lon)-delta},{float(lat)+delta},{float(lon)+delta}"
 
@@ -32,7 +32,6 @@ def index():
     capital = random.choice(capitals).strip().split(',')
     city, country, lat, lon = capital
     
-    # Print the city for debugging
     print(f"Debug: Selected city is {city}")
 
     # Generate bounding box
@@ -51,14 +50,25 @@ def index():
         response.raise_for_status()  # Raise an exception for bad responses
         parsed_data = response.json()
 
-        if parsed_data['data']:
+        print(f"Debug: API Response - {response.status_code}")
+        print(f"Debug: Response content - {response.text[:200]}...")  # Print first 200 characters
+
+        if parsed_data.get('data'):
             image_id = parsed_data['data'][0]['id']
             return render_template('index.html', image=image_id, city=city, country=country)
         else:
-            return "No image found for this location. Try again!"
+            print(f"Debug: No image found for {city}, {country}. bbox: {bbox}")
+            return f"No image found for {city}, {country}. Please try again!"
 
     except requests.RequestException as e:
+        print(f"Debug: Request Exception - {str(e)}")
+        if hasattr(e.response, 'text'):
+            print(f"Debug: Error response content - {e.response.text[:200]}...")
         return f"An error occurred: {str(e)}"
+
+    except Exception as e:
+        print(f"Debug: Unexpected error - {str(e)}")
+        return f"An unexpected error occurred: {str(e)}"
 
 @app.errorhandler(404)
 def page_not_found(e):
