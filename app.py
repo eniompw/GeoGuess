@@ -4,6 +4,7 @@ import json
 import random
 import os
 from dotenv import load_dotenv
+from werkzeug.urls import quote  # Updated import
 
 # Load environment variables
 load_dotenv()
@@ -21,7 +22,7 @@ def load_capitals():
 
 capitals = load_capitals()
 
-def generate_bbox(lat, lon, delta=0.002):
+def generate_bbox(lat, lon, delta=0.005):
     """Generate a bounding box around given coordinates."""
     return f"{float(lat)-delta},{float(lon)-delta},{float(lat)+delta},{float(lon)+delta}"
 
