@@ -17,4 +17,7 @@ def login():
     x = requests.get(base_url, params=params)
     parsed_data = json.loads(x.text)
     image = parsed_data['data'][0]['id']
-    return render_template('jinja.html', image=image)
+    return render_template('index.html', image=image)
+
+if __name__ == '__main__':
+    app.run(debug=True)
