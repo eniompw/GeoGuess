@@ -1,0 +1,15 @@
+<script src="https://unpkg.com/mapillary-js@4.1.2/dist/mapillary.js"></script>
+<link
+  href="https://unpkg.com/mapillary-js@4.1.2/dist/mapillary.css"
+  rel="stylesheet"
+/>
+<div id="mly" style="width: 400px; height: 300px;"></div>
+<script>
+    var {Viewer} = mapillary;
+  
+    var viewer = new Viewer({
+      accessToken: 'API_KEY_HERE',
+      container: 'mly', // the ID of our container defined in the HTML body
+      imageId: {{image}},
+    });
+  </script>
