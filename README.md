@@ -11,6 +11,8 @@ This is a GeoGuessr-like web application that displays street view images from w
 - `templates/search.html`: HTML template for the search functionality.
 - `templates/404.html`: Custom 404 error page.
 - `.env`: Configuration file for environment variables (not included in repository).
+- `getID.py`: Script to fetch image IDs from Mapillary API.
+- `getImage.py`: Script to download images from Mapillary API.
 
 ## Features
 
@@ -22,6 +24,7 @@ This is a GeoGuessr-like web application that displays street view images from w
 - Responsive design for various screen sizes.
 - "New Location" button to quickly load a new challenge.
 - Copy-to-clipboard feature for sharing API request URLs.
+- Utility scripts for fetching image IDs and downloading images from Mapillary API.
 
 ## How it works
 
@@ -74,6 +77,7 @@ This is a GeoGuessr-like web application that displays street view images from w
 - Custom error handling for API requests and 404 errors.
 - Responsive CSS for adaptable layout on different devices.
 - Fetch API for asynchronous search requests.
+- Utility scripts (`getID.py` and `getImage.py`) for direct interaction with Mapillary API.
 
 ## Future Improvements
 
