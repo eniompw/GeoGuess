@@ -24,30 +24,40 @@ def generate_bbox(lat, lon, delta=0.001):
     lat, lon = float(lat), float(lon)
     return f"{lon-delta:.4f},{lat-delta:.4f},{lon+delta:.4f},{lat+delta:.4f}"
 
-def get_image_id(lat, lon):
+def get_image_id(lat, lon, initial_delta=0.001, max_attempts=5):
     lat, lon = round(float(lat), 4), round(float(lon), 4)
-    bbox = generate_bbox(lat, lon)
-    params = {
-        "access_token": access_token,
-        "fields": "id",
-        "bbox": bbox
-    }
-    request_url = f"{base_url}?{'&'.join([f'{k}={v}' for k, v in params.items()])}"
+    delta = initial_delta
     
-    try:
-        response = requests.get(base_url, params=params)
-        response.raise_for_status()
-        parsed_data = response.json()
-        if parsed_data.get('data'):
-            return parsed_data['data'][0]['id'], request_url
-    except requests.RequestException as e:
-        print(f"API request error: {str(e)}")
+    for attempt in range(max_attempts):
+        bbox = generate_bbox(lat, lon, delta)
+        params = {
+            "access_token": access_token,
+            "fields": "id",
+            "bbox": bbox
+        }
+        request_url = f"{base_url}?{'&'.join([f'{k}={v}' for k, v in params.items()])}"
+        
+        try:
+            response = requests.get(base_url, params=params)
+            response.raise_for_status()
+            parsed_data = response.json()
+            print(f"Attempt {attempt + 1}: Delta = {delta:.6f}")  # Print the current delta
+            if parsed_data.get('data'):
+                print(f"Image found with delta: {delta:.6f}")  # Print the delta when an image is found
+                return parsed_data['data'][0]['id'], request_url
+        except requests.RequestException as e:
+            print(f"API request error: {str(e)}")
+        
+        # Increase delta exponentially
+        delta *= 10
+    
+    print(f"No image found after {max_attempts} attempts. Final delta: {delta:.6f}")  # Print final delta if no image is found
     return None, request_url
 
 @app.route('/')
 def index():
     city, country, lat, lon = random.choice(capitals).strip().split(',')
-    image_id, _ = get_image_id(lat, lon)
+    image_id, _ = get_image_id(lat, lon, initial_delta=0.001, max_attempts=5)
     if image_id:
         return render_template('index.html', image=image_id, city=city, country=country)
     return "No image found. Please try again!"
@@ -57,7 +67,7 @@ def search():
     if request.method == 'POST':
         lat = round(float(request.form['latitude']), 4)
         lon = round(float(request.form['longitude']), 4)
-        image_id, request_url = get_image_id(lat, lon)
+        image_id, request_url = get_image_id(lat, lon, initial_delta=0.001, max_attempts=5)
         
         if image_id:
             return jsonify({'image': image_id, 'lat': lat, 'lon': lon, 'request_url': request_url})
