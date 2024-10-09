@@ -55,6 +55,15 @@
         #result-container {
             display: none;
         }
+        #request-url {
+            font-size: 0.9em;
+            word-break: break-all;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -64,9 +73,7 @@
         <input type="text" name="longitude" placeholder="Longitude" required>
         <button type="submit">Search</button>
     </form>
-    {% if error %}
-    <p class="error">{{ error }}</p>
-    {% endif %}
+    <div id="request-url"></div>
 
     <div id="result-container">
         <div id="mly"></div>
@@ -78,6 +85,7 @@
         const searchForm = document.getElementById('search-form');
         const resultContainer = document.getElementById('result-container');
         const locationInfo = document.getElementById('location-info');
+        const requestUrlDiv = document.getElementById('request-url');
         const newSearchBtn = document.getElementById('new-search-btn');
 
         searchForm.addEventListener('submit', async (e) => {
@@ -89,8 +97,11 @@
             });
             const data = await response.json();
 
+            requestUrlDiv.textContent = `Request URL: ${data.request_url}`;
+
             if (data.error) {
                 alert(data.error);
+                resultContainer.style.display = 'none';
             } else {
                 resultContainer.style.display = 'block';
                 locationInfo.textContent = `Coordinates: ${data.lat}, ${data.lon}`;
@@ -106,7 +117,9 @@
 
         newSearchBtn.addEventListener('click', () => {
             resultContainer.style.display = 'none';
+            locationInfo.textContent = '';
             searchForm.reset();
+            // We're not clearing the request URL here
         });
     </script>
 </body>
