@@ -1,34 +1,41 @@
-# GeoGuessr Clone
+# GeoGuessr Clone with Search Feature
 
-This is a simple GeoGuessr-like web application that displays random street view images from world capitals using the Mapillary API. Users can test their geography knowledge by guessing the location of the displayed image.
+This is a GeoGuessr-like web application that displays street view images from world capitals using the Mapillary API. Users can test their geography knowledge by guessing the location of displayed images or search for specific locations.
 
 ## Project Structure
 
-- `app.py`: Flask application that serves the images to the user.
+- `app.py`: Flask application that serves the images and handles search requests.
 - `capitals.csv`: Contains a list of 195 world capitals and their coordinates.
 - `requirements.txt`: List of Python package dependencies.
-- `templates/index.html`: Main HTML template for the web app, including the Mapillary viewer.
+- `templates/index.html`: Main HTML template for the random capital challenge.
+- `templates/search.html`: HTML template for the search functionality.
 - `templates/404.html`: Custom 404 error page.
 - `.env`: Configuration file for environment variables (not included in repository).
 
 ## Features
 
 - Random selection of world capitals from a database of 195 locations.
+- Search functionality to view street images from specific coordinates.
 - Street view images powered by Mapillary API.
-- Interactive guessing system with immediate feedback.
+- Interactive Mapillary viewer for immersive street view experience.
 - Custom 404 error page for improved user experience.
 - Responsive design for various screen sizes.
 - "New Location" button to quickly load a new challenge.
+- Copy-to-clipboard feature for sharing API request URLs.
 
 ## How it works
 
+### Random Capital Challenge
 1. The app selects a random capital from the `capitals.csv` file.
 2. It generates a small bounding box around the capital's coordinates.
 3. The app queries the Mapillary API to get an image within that bounding box.
 4. The image is displayed to the user using the Mapillary.js viewer.
-5. The user can input their guess for the location.
-6. Feedback is provided on whether the guess is correct or not.
-7. The correct location is revealed after the guess.
+
+### Search Functionality
+1. Users can input specific latitude and longitude coordinates.
+2. The app queries the Mapillary API to find an image near the given coordinates.
+3. If an image is found, it's displayed using the Mapillary.js viewer.
+4. The API request URL is shown and can be easily copied for sharing.
 
 ## Setup and Running
 
@@ -66,16 +73,18 @@ This is a simple GeoGuessr-like web application that displays random street view
 - Environment variables for secure API key storage.
 - Custom error handling for API requests and 404 errors.
 - Responsive CSS for adaptable layout on different devices.
+- Fetch API for asynchronous search requests.
 
 ## Future Improvements
 
-- Implement a scoring system to track user performance.
+- Implement a scoring system for the random capital challenge.
 - Add a timer for each guess to increase challenge.
 - Create difficulty levels based on country popularity or region.
 - Develop a multiplayer mode for competitive play.
 - Integrate a map view to show the correct location after guessing.
-- Implement caching for capitals data to improve performance.
+- Implement caching for capitals data and API responses to improve performance.
 - Add user accounts and leaderboards.
+- Enhance the search functionality with autocomplete and place name search.
 
 ## License
 
