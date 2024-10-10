@@ -78,18 +78,17 @@
             imageId: '{{ image }}',
         });
 
-        const city = "{{ city }}";
-        const country = "{{ country }}";
+        const city = "{{ city }}".toLowerCase();
+        const country = "{{ country }}".toLowerCase();
         const submitGuess = document.getElementById('submit-guess');
         const guessInput = document.getElementById('guess-input');
         const result = document.getElementById('result');
 
         submitGuess.addEventListener('click', () => {
             const guess = guessInput.value.trim().toLowerCase();
-            const actualLocation = `${city}, ${country}`.toLowerCase();
             
-            if (guess === actualLocation) {
-                result.textContent = "Correct! Well done!";
+            if (guess === city || guess === country) {
+                result.textContent = `Correct! The location is ${city}, ${country}.`;
                 result.style.color = "green";
             } else {
                 result.textContent = `Sorry, the correct answer was ${city}, ${country}.`;
