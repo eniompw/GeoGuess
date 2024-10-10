@@ -3,6 +3,7 @@ import requests
 import random
 import os
 from dotenv import load_dotenv
+import csv
 
 # Load environment variables
 load_dotenv()
@@ -16,8 +17,9 @@ if not access_token:
     raise ValueError("MAPILLARY_ACCESS_TOKEN not set in environment variables")
 
 # Load and cache capitals data
-with open('capitals.csv', 'r') as f:
-    capitals = f.readlines()[1:]  # Skip header
+with open('capitals_sorted_by_gdp.csv', 'r') as f:
+    csv_reader = csv.DictReader(f)
+    capitals = list(csv_reader)
 
 def generate_bbox(lat, lon, delta=0.001):
     """Generate a bounding box around given coordinates."""
@@ -56,10 +58,10 @@ def get_image_id(lat, lon, initial_delta=0.001, max_attempts=5):
 
 @app.route('/')
 def index():
-    city, country, lat, lon = random.choice(capitals).strip().split(',')
-    image_id, _ = get_image_id(lat, lon, initial_delta=0.001, max_attempts=5)
+    capital = random.choice(capitals)
+    image_id, _ = get_image_id(capital['Latitude'], capital['Longitude'], initial_delta=0.001, max_attempts=5)
     if image_id:
-        return render_template('index.html', image=image_id, city=city, country=country)
+        return render_template('index.html', image=image_id, city=capital['Capital'], country=capital['Country'])
     return "No image found. Please try again!"
 
 @app.route('/search', methods=['GET', 'POST'])
