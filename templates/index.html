@@ -103,7 +103,7 @@
     <div id="mly"></div>
     <div id="game-container">
         <div id="instructions">
-            Guess the location! It could be either a capital city or a country.<br>
+            Guess the location! You can enter either the capital city or the country name.<br>
             There are 5 rounds of increasing difficulty. Can you guess them all?
         </div>
         <div id="round-info">
@@ -164,15 +164,22 @@
                 } else {
                     result.textContent = data.message;
                     result.style.color = "red";
-                    setTimeout(() => {
-                        initializeViewer(data.new_image);
-                        locationName = data.new_location_name.toLowerCase();
-                        result.textContent = "New location loaded. Try again!";
-                        result.style.color = "black";
+                    if (data.tries_reset) {
+                        setTimeout(() => {
+                            initializeViewer(data.new_image);
+                            locationName = data.new_location_name.toLowerCase();
+                            result.textContent = "New location loaded. Try again!";
+                            result.style.color = "black";
+                            guessInput.value = '';
+                            guessInput.disabled = false;
+                            submitGuess.disabled = false;
+                        }, 3000);
+                    } else {
                         guessInput.value = '';
                         guessInput.disabled = false;
                         submitGuess.disabled = false;
-                    }, 3000);
+                        guessInput.focus();
+                    }
                 }
             })
             .catch(error => {

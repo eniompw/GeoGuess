@@ -5,90 +5,54 @@ import os
 from dotenv import load_dotenv
 import csv
 
-# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # Set a secret key for session management
+app.secret_key = os.urandom(24)
 
 # Mapillary API configuration
-base_url = "https://graph.mapillary.com/images"
-access_token = os.getenv("MAPILLARY_ACCESS_TOKEN")
-if not access_token:
+BASE_URL = "https://graph.mapillary.com/images"
+ACCESS_TOKEN = os.getenv("MAPILLARY_ACCESS_TOKEN")
+if not ACCESS_TOKEN:
     raise ValueError("MAPILLARY_ACCESS_TOKEN not set in environment variables")
 
 # Load and cache capitals data
 with open('capitals_sorted_by_gdp.csv', 'r') as f:
-    csv_reader = csv.DictReader(f)
-    capitals = list(csv_reader)
+    CAPITALS = list(csv.DictReader(f))
 
-# Define difficulty levels
-DIFFICULTY_RANGES = [
-    (0, 40),    # Top 40 capitals
-    (40, 80),   # Next 40 capitals
-    (80, 120),  # Next 40 capitals
-    (120, 160), # Next 40 capitals
-    (160, None) # Remaining capitals
-]
-
-def generate_bbox(lat, lon, delta=0.001):
-    """Generate a bounding box around given coordinates."""
-    lat, lon = float(lat), float(lon)
-    return f"{lon-delta:.4f},{lat-delta:.4f},{lon+delta:.4f},{lat+delta:.4f}"
+# Define difficulty ranges
+DIFFICULTY_RANGES = [(0, 40), (40, 80), (80, 120), (120, 160), (160, None)]
 
 def get_image_id(lat, lon, initial_delta=0.001, max_attempts=5):
     lat, lon = round(float(lat), 4), round(float(lon), 4)
     delta = initial_delta
     
     for attempt in range(max_attempts):
-        bbox = generate_bbox(lat, lon, delta)
+        bbox = f"{lon-delta:.4f},{lat-delta:.4f},{lon+delta:.4f},{lat+delta:.4f}"
         params = {
-            "access_token": access_token,
+            "access_token": ACCESS_TOKEN,
             "fields": "id",
             "bbox": bbox
         }
-        request_url = f"{base_url}?{'&'.join([f'{k}={v}' for k, v in params.items()])}"
         
         try:
-            response = requests.get(base_url, params=params)
+            response = requests.get(BASE_URL, params=params)
             response.raise_for_status()
-            parsed_data = response.json()
-            print(f"Attempt {attempt + 1}: Delta = {delta:.6f}")  # Print the current delta
-            if parsed_data.get('data'):
-                num_images = len(parsed_data['data'])
-                print(f"Images found: {num_images} with delta: {delta:.6f}")  # Print the number of images found
-                # Randomly select an image from the returned data
-                random_index = random.randint(0, num_images - 1)
-                random_image = parsed_data['data'][random_index]
-                print(f"Selected image index: {random_index} out of {num_images}")  # Print the selected image index
-                return random_image['id'], request_url
+            data = response.json().get('data', [])
+            if data:
+                return random.choice(data)['id']
         except requests.RequestException as e:
             print(f"API request error: {str(e)}")
         
-        # Increase delta exponentially
         delta *= 10
     
-    print(f"No image found after {max_attempts} attempts. Final delta: {delta:.6f}")  # Print final delta if no image is found
-    return None, request_url
+    return None
 
 def get_city_for_round(current_round):
     start, end = DIFFICULTY_RANGES[current_round]
-    capital = random.choice(capitals[start:end if end else None])
-    image_id, _ = get_image_id(capital['Latitude'], capital['Longitude'], initial_delta=0.001, max_attempts=5)
-    
-    # Debug print for the newly chosen city
-    print(f"New city chosen: {capital['Capital']}, {capital['Country']}")
-    print(f"Difficulty range: {start} - {end}")
-    print(f"City Position in list: {capitals.index(capital) + 1} out of {len(capitals)}")
-    
+    capital = random.choice(CAPITALS[start:end if end else None])
+    image_id = get_image_id(capital['Latitude'], capital['Longitude'])
     return capital, image_id
-
-@app.route('/')
-def index():
-    # Initialize or reset the game session
-    session['current_round'] = 0
-    session['correct_answers'] = 0
-    return start_new_round()
 
 def start_new_round():
     current_round = session.get('current_round', 0)
@@ -96,56 +60,62 @@ def start_new_round():
     if current_round >= len(DIFFICULTY_RANGES):
         return render_template('game_over.html', score=session.get('correct_answers', 0))
     
-    start, end = DIFFICULTY_RANGES[current_round]
-    capital = random.choice(capitals[start:end if end else None])
+    capital, image_id = get_city_for_round(current_round)
     
-    # Debugging: Print the selected capital and its position
-    capital_index = capitals.index(capital)
-    print(f"Selected capital: {capital['Capital']}, {capital['Country']}")
-    print(f"City Position in list: {capital_index + 1} out of {len(capitals)}")
-    print(f"Current difficulty range: {start} - {end}")
-    
-    image_id, _ = get_image_id(capital['Latitude'], capital['Longitude'], initial_delta=0.001, max_attempts=5)
     if image_id:
         session['current_capital'] = capital
-        # Pass both capital and country to the template
         location_name = f"{capital['Capital']}, {capital['Country']}"
         return render_template('index.html', image=image_id, round=current_round + 1, location_name=location_name)
     return "No image found. Please try again!"
 
+@app.route('/')
+def index():
+    session['current_round'] = 0
+    session['correct_answers'] = 0
+    session['incorrect_tries'] = 0
+    return start_new_round()
+
 @app.route('/guess', methods=['POST'])
 def guess():
-    user_guess = request.form['guess'].lower()
+    user_guess = request.form['guess'].lower().strip()
     current_capital = session.get('current_capital')
     current_round = session.get('current_round', 0)
+    incorrect_tries = session.get('incorrect_tries', 0)
     
-    if current_capital and user_guess == current_capital['Capital'].lower():
-        session['correct_answers'] = session.get('correct_answers', 0) + 1
-        session['current_round'] = current_round + 1
-        return jsonify({
-            'correct': True,
-            'message': f"Correct! It was {current_capital['Capital']}, {current_capital['Country']}.",
-            'capital': current_capital['Capital'],
-            'country': current_capital['Country'],
-            'latitude': current_capital['Latitude'],
-            'longitude': current_capital['Longitude'],
-            'next_round': True
-        })
-    elif current_capital:
-        new_capital, new_image_id = get_city_for_round(current_round)
-        session['current_capital'] = new_capital
+    if current_capital:
+        correct_capital = current_capital['Capital'].lower()
+        correct_country = current_capital['Country'].lower()
         
-        # Debug print for incorrect guess and new city
-        print(f"Incorrect guess: {user_guess}")
-        print(f"Correct answer was: {current_capital['Capital']}, {current_capital['Country']}")
-        print(f"New city loaded: {new_capital['Capital']}, {new_capital['Country']}")
-        
-        return jsonify({
-            'correct': False,
-            'message': f"Wrong! It was {current_capital['Capital']}, {current_capital['Country']}. Let's try a new city!",
-            'new_image': new_image_id,
-            'new_location_name': f"{new_capital['Capital']}, {new_capital['Country']}"
-        })
+        if user_guess == correct_capital or user_guess == correct_country:
+            session['correct_answers'] = session.get('correct_answers', 0) + 1
+            session['current_round'] = current_round + 1
+            session['incorrect_tries'] = 0
+            return jsonify({
+                'correct': True,
+                'message': f"Correct! It was {current_capital['Capital']}, {current_capital['Country']}.",
+                'next_round': True
+            })
+        else:
+            incorrect_tries += 1
+            session['incorrect_tries'] = incorrect_tries
+            
+            if incorrect_tries >= 3:
+                new_capital, new_image_id = get_city_for_round(current_round)
+                session['current_capital'] = new_capital
+                session['incorrect_tries'] = 0
+                return jsonify({
+                    'correct': False,
+                    'message': f"Wrong! It was {current_capital['Capital']}, {current_capital['Country']}. Let's try a new city!",
+                    'new_image': new_image_id,
+                    'new_location_name': f"{new_capital['Capital']}, {new_capital['Country']}",
+                    'tries_reset': True
+                })
+            else:
+                return jsonify({
+                    'correct': False,
+                    'message': f"Wrong! Try again. You have {3 - incorrect_tries} {'try' if 3 - incorrect_tries == 1 else 'tries'} left.",
+                    'tries_left': 3 - incorrect_tries
+                })
     else:
         return jsonify({'error': 'No current capital in session'})
 
@@ -153,28 +123,11 @@ def guess():
 def next_round():
     return start_new_round()
 
-@app.route('/search', methods=['GET', 'POST'])
-def search():
-    if request.method == 'POST':
-        lat = round(float(request.form['latitude']), 4)
-        lon = round(float(request.form['longitude']), 4)
-        image_id, request_url = get_image_id(lat, lon, initial_delta=0.001, max_attempts=5)
-        
-        if image_id:
-            return jsonify({'image': image_id, 'lat': lat, 'lon': lon, 'request_url': request_url})
-        return jsonify({'error': f"No image found for coordinates: {lat}, {lon}", 'request_url': request_url})
-    
-    return render_template('search.html')
-
-@app.errorhandler(404)
-def page_not_found(e):
-    return render_template('404.html'), 404
-
 @app.route('/new_game')
 def new_game():
-    # Reset the game session
     session['current_round'] = 0
     session['correct_answers'] = 0
+    session['incorrect_tries'] = 0
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
