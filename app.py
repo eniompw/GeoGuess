@@ -55,8 +55,13 @@ def get_image_id(lat, lon, initial_delta=0.001, max_attempts=5):
             parsed_data = response.json()
             print(f"Attempt {attempt + 1}: Delta = {delta:.6f}")  # Print the current delta
             if parsed_data.get('data'):
-                print(f"Image found with delta: {delta:.6f}")  # Print the delta when an image is found
-                return parsed_data['data'][0]['id'], request_url
+                num_images = len(parsed_data['data'])
+                print(f"Images found: {num_images} with delta: {delta:.6f}")  # Print the number of images found
+                # Randomly select an image from the returned data
+                random_index = random.randint(0, num_images - 1)
+                random_image = parsed_data['data'][random_index]
+                print(f"Selected image index: {random_index} out of {num_images}")  # Print the selected image index
+                return random_image['id'], request_url
         except requests.RequestException as e:
             print(f"API request error: {str(e)}")
         
@@ -74,7 +79,7 @@ def get_city_for_round(current_round):
     # Debug print for the newly chosen city
     print(f"New city chosen: {capital['Capital']}, {capital['Country']}")
     print(f"Difficulty range: {start} - {end}")
-    print(f"Position in list: {capitals.index(capital) + 1} out of {len(capitals)}")
+    print(f"City Position in list: {capitals.index(capital) + 1} out of {len(capitals)}")
     
     return capital, image_id
 
@@ -97,7 +102,7 @@ def start_new_round():
     # Debugging: Print the selected capital and its position
     capital_index = capitals.index(capital)
     print(f"Selected capital: {capital['Capital']}, {capital['Country']}")
-    print(f"Position in list: {capital_index + 1} out of {len(capitals)}")
+    print(f"City Position in list: {capital_index + 1} out of {len(capitals)}")
     print(f"Current difficulty range: {start} - {end}")
     
     image_id, _ = get_image_id(capital['Latitude'], capital['Longitude'], initial_delta=0.001, max_attempts=5)
