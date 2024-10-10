@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import requests
 import random
 import os
@@ -66,6 +66,18 @@ def get_image_id(lat, lon, initial_delta=0.001, max_attempts=5):
     print(f"No image found after {max_attempts} attempts. Final delta: {delta:.6f}")  # Print final delta if no image is found
     return None, request_url
 
+def get_city_for_round(current_round):
+    start, end = DIFFICULTY_RANGES[current_round]
+    capital = random.choice(capitals[start:end if end else None])
+    image_id, _ = get_image_id(capital['Latitude'], capital['Longitude'], initial_delta=0.001, max_attempts=5)
+    
+    # Debug print for the newly chosen city
+    print(f"New city chosen: {capital['Capital']}, {capital['Country']}")
+    print(f"Difficulty range: {start} - {end}")
+    print(f"Position in list: {capitals.index(capital) + 1} out of {len(capitals)}")
+    
+    return capital, image_id
+
 @app.route('/')
 def index():
     # Initialize or reset the game session
@@ -100,26 +112,34 @@ def start_new_round():
 def guess():
     user_guess = request.form['guess'].lower()
     current_capital = session.get('current_capital')
+    current_round = session.get('current_round', 0)
     
     if current_capital and user_guess == current_capital['Capital'].lower():
         session['correct_answers'] = session.get('correct_answers', 0) + 1
-        session['current_round'] = session.get('current_round', 0) + 1
+        session['current_round'] = current_round + 1
         return jsonify({
             'correct': True,
             'message': f"Correct! It was {current_capital['Capital']}, {current_capital['Country']}.",
             'capital': current_capital['Capital'],
             'country': current_capital['Country'],
             'latitude': current_capital['Latitude'],
-            'longitude': current_capital['Longitude']
+            'longitude': current_capital['Longitude'],
+            'next_round': True
         })
     elif current_capital:
+        new_capital, new_image_id = get_city_for_round(current_round)
+        session['current_capital'] = new_capital
+        
+        # Debug print for incorrect guess and new city
+        print(f"Incorrect guess: {user_guess}")
+        print(f"Correct answer was: {current_capital['Capital']}, {current_capital['Country']}")
+        print(f"New city loaded: {new_capital['Capital']}, {new_capital['Country']}")
+        
         return jsonify({
             'correct': False,
-            'message': f"Wrong! It was {current_capital['Capital']}, {current_capital['Country']}.",
-            'capital': current_capital['Capital'],
-            'country': current_capital['Country'],
-            'latitude': current_capital['Latitude'],
-            'longitude': current_capital['Longitude']
+            'message': f"Wrong! It was {current_capital['Capital']}, {current_capital['Country']}. Let's try a new city!",
+            'new_image': new_image_id,
+            'new_location_name': f"{new_capital['Capital']}, {new_capital['Country']}"
         })
     else:
         return jsonify({'error': 'No current capital in session'})
@@ -144,6 +164,13 @@ def search():
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
+
+@app.route('/new_game')
+def new_game():
+    # Reset the game session
+    session['current_round'] = 0
+    session['correct_answers'] = 0
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)
