@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GeoGuessr Clone</title>
+    <title>GeoGuess Challenge</title>
     <script src="https://unpkg.com/mapillary-js@4.1.2/dist/mapillary.js"></script>
     <link href="https://unpkg.com/mapillary-js@4.1.2/dist/mapillary.css" rel="stylesheet" />
     <style>
@@ -39,36 +39,50 @@
         }
         #guess-form {
             margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         #guess-input {
-            padding: 5px;
+            padding: 10px;
             font-size: 1em;
+            width: 300px;
+            margin-bottom: 10px;
         }
         #submit-guess {
-            padding: 5px 10px;
+            padding: 10px 20px;
             font-size: 1em;
             cursor: pointer;
             background-color: #4CAF50;
             color: white;
             border: none;
-            border-radius: 3px;
+            border-radius: 5px;
         }
         #result {
             font-size: 1.2em;
             margin-bottom: 20px;
             font-weight: bold;
         }
+        #instructions {
+            font-size: 1em;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #555;
+        }
     </style>
 </head>
 <body>
-    <h1>GeoGuessr Clone</h1>
+    <h1>GeoGuess Challenge</h1>
     <div id="mly"></div>
+    <div id="instructions">
+        Guess the location! It could be either a capital city or a country.
+    </div>
     <div id="guess-form">
-        <input type="text" id="guess-input" placeholder="Enter your guess">
+        <input type="text" id="guess-input" placeholder="Enter a capital or country">
         <button id="submit-guess">Submit Guess</button>
     </div>
     <div id="result"></div>
-    <button id="new-location-btn" onclick="window.location.reload();">New Location</button>
+    <button id="new-location-btn" onclick="window.location.reload();">New Challenge</button>
 
     <script>
         var { Viewer } = mapillary;
@@ -78,8 +92,7 @@
             imageId: '{{ image }}',
         });
 
-        const city = "{{ city }}".toLowerCase();
-        const country = "{{ country }}".toLowerCase();
+        const locationName = "{{ location_name }}".toLowerCase();
         const submitGuess = document.getElementById('submit-guess');
         const guessInput = document.getElementById('guess-input');
         const result = document.getElementById('result');
@@ -87,13 +100,17 @@
         submitGuess.addEventListener('click', () => {
             const guess = guessInput.value.trim().toLowerCase();
             
-            if (guess === city || guess === country) {
-                result.textContent = `Correct! The location is ${city}, ${country}.`;
+            if (locationName.includes(guess)) {
+                result.textContent = `Correct! The location is ${locationName}.`;
                 result.style.color = "green";
             } else {
-                result.textContent = `Sorry, the correct answer was ${city}, ${country}.`;
+                result.textContent = `Not quite. The correct location is ${locationName}.`;
                 result.style.color = "red";
             }
+            
+            // Disable input and button after guess
+            guessInput.disabled = true;
+            submitGuess.disabled = true;
         });
     </script>
 </body>
