@@ -84,14 +84,14 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    if (retryCount < 2) {
+                    if (retryCount < 2) {  // Try 3 times in total (0, 1, 2)
                         elements.result.textContent = `An error occurred while loading the image. Retrying... (Attempt ${retryCount + 2}/3)`;
                         elements.result.style.color = "orange";
                         setTimeout(() => loadImage(retryCount + 1), 2000);
                     } else {
-                        elements.result.textContent = "Failed to load the image after 3 attempts. Please try starting a new game.";
-                        elements.result.style.color = "red";
-                        toggleLoading(false);
+                        elements.result.textContent = "Failed to load the image. Trying a new location...";
+                        elements.result.style.color = "orange";
+                        setTimeout(() => loadImage(0), 2000);  // Reset retry count and try a new image
                     }
                 });
         }
