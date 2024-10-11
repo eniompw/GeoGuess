@@ -7,82 +7,24 @@
     <script src="https://unpkg.com/mapillary-js@4.1.2/dist/mapillary.js"></script>
     <link href="https://unpkg.com/mapillary-js@4.1.2/dist/mapillary.css" rel="stylesheet" />
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            background-color: #f0f0f0;
-            color: #333;
-        }
+        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; background-color: #f0f0f0; color: #333; }
         h1, #round-info { color: #2c3e50; }
-        #mly, #game-container {
-            width: 100%;
-            max-width: 800px;
-            margin-bottom: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
+        #mly, #game-container { width: 100%; max-width: 800px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
         #mly { height: 600px; overflow: hidden; }
-        #game-container {
-            background-color: white;
-            padding: 20px;
-            max-width: 600px;
-        }
+        #game-container { background-color: white; padding: 20px; max-width: 600px; }
         #instructions, #round-info, #result { text-align: center; margin-bottom: 15px; }
         #round-info, #result { font-size: 1.2em; font-weight: bold; }
         #guess-form { display: flex; flex-direction: column; align-items: center; }
-        #guess-input, .btn {
-            width: 100%;
-            max-width: 300px;
-            padding: 10px;
-            font-size: 1em;
-            margin-bottom: 10px;
-            border-radius: 5px;
-        }
+        #guess-input, .btn { width: 100%; max-width: 300px; padding: 10px; font-size: 1em; margin-bottom: 10px; border-radius: 5px; }
         #guess-input { border: 1px solid #ccc; }
-        .btn {
-            cursor: pointer;
-            color: white;
-            border: none;
-            transition: background-color 0.3s ease;
-        }
+        .btn { cursor: pointer; color: white; border: none; transition: background-color 0.3s ease; }
         #submit-guess { background-color: #3498db; }
         #submit-guess:hover { background-color: #2980b9; }
-        #new-game-btn {
-            background-color: #2ecc71;
-            font-size: 1.1em;
-            padding: 12px 24px;
-        }
+        #new-game-btn { background-color: #2ecc71; font-size: 1.1em; padding: 12px 24px; }
         #new-game-btn:hover { background-color: #27ae60; }
-        #loading-indicator {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            font-size: 1.2em;
-            z-index: 1000;
-            display: none;
-        }
-        .ellipsis::after {
-            content: '...';
-            animation: ellipsis-animation 1.5s infinite;
-            display: inline-block;
-            width: 0;
-            overflow: hidden;
-        }
-        @keyframes ellipsis-animation {
-            0% { width: 0; }
-            25% { width: 0.25em; }
-            50% { width: 0.5em; }
-            75% { width: 0.75em; }
-            100% { width: 1em; }
-        }
+        #loading-indicator { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(0, 0, 0, 0.7); color: white; padding: 20px; border-radius: 10px; font-size: 1.2em; z-index: 1000; display: none; }
+        .ellipsis::after { content: '...'; animation: ellipsis-animation 1.5s infinite; display: inline-block; width: 0; overflow: hidden; }
+        @keyframes ellipsis-animation { 0% { width: 0; } 25% { width: 0.25em; } 50% { width: 0.5em; } 75% { width: 0.75em; } 100% { width: 1em; } }
     </style>
 </head>
 <body>
@@ -90,10 +32,7 @@
     <div id="mly"></div>
     <div id="loading-indicator">Loading next location<span class="ellipsis"></span></div>
     <div id="game-container">
-        <div id="instructions">
-            Guess the location! Enter either the capital city or the country name.<br>
-            There are 5 rounds of increasing difficulty. Can you guess them all?
-        </div>
+        <div id="instructions">Guess the location! Enter either the capital city or the country name.<br>There are 5 rounds of increasing difficulty. Can you guess them all?</div>
         <div id="round-info">Round: <span id="current-round">{{ round }}</span> / 5</div>
         <div id="guess-form">
             <input type="text" id="guess-input" placeholder="Enter a capital or country">
@@ -126,8 +65,7 @@
 
         function toggleLoading(show) {
             elements.loadingIndicator.style.display = show ? 'flex' : 'none';
-            elements.guessInput.disabled = show;
-            elements.submitGuess.disabled = show;
+            elements.guessInput.disabled = elements.submitGuess.disabled = show;
         }
 
         function submitAnswer() {
@@ -149,21 +87,20 @@
                 elements.result.textContent = data.message;
                 elements.result.style.color = data.correct ? "green" : "red";
                 
-                if (data.correct && data.next_round) {
-                    setTimeout(() => {
-                        toggleLoading(true);
-                        setTimeout(() => { window.location.href = '/next_round'; }, 2000);
-                    }, 1000);
-                } else if (!data.correct && data.tries_reset) {
+                if (data.correct && data.next_round || (!data.correct && data.tries_reset)) {
                     setTimeout(() => {
                         toggleLoading(true);
                         setTimeout(() => {
-                            initializeViewer(data.new_image);
-                            elements.result.textContent = "New location loaded. Try again!";
-                            elements.result.style.color = "black";
-                            elements.guessInput.value = '';
-                            toggleLoading(false);
-                            elements.submitGuess.disabled = false;
+                            if (data.correct && data.next_round) {
+                                window.location.href = '/next_round';
+                            } else {
+                                initializeViewer(data.new_image);
+                                elements.result.textContent = "New location loaded. Try again!";
+                                elements.result.style.color = "black";
+                                elements.guessInput.value = '';
+                                toggleLoading(false);
+                                elements.submitGuess.disabled = false;
+                            }
                         }, 2000);
                     }, 1000);
                 } else {
@@ -181,12 +118,8 @@
         }
 
         elements.submitGuess.addEventListener('click', submitAnswer);
-        elements.guessInput.addEventListener('keyup', event => {
-            if (event.key === 'Enter') submitAnswer();
-        });
-        document.getElementById('new-game-btn').addEventListener('click', () => {
-            window.location.href = '/new_game';
-        });
+        elements.guessInput.addEventListener('keyup', event => { if (event.key === 'Enter') submitAnswer(); });
+        document.getElementById('new-game-btn').addEventListener('click', () => { window.location.href = '/new_game'; });
     </script>
 </body>
 </html>
