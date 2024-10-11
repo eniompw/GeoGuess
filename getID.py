@@ -1,35 +1,29 @@
 import requests
-from urllib.parse import urlencode
 
-api_base_url = "https://graph.mapillary.com/images"
-mapillary_access_token = "API_KEY_HERE"
+# API configuration
+API_BASE_URL = "https://graph.mapillary.com/images"
+ACCESS_TOKEN = "API_KEY_HERE"
 
-# Center point
-lat, long = 51.5078, -0.1277
-
-# Create bounding box (approximately 11m around the center point)
+# Center point and bounding box
+lat, lon = 51.5078, -0.1277
 bbox_size = 0.0001
-bbox = [
-    round(long - bbox_size, 4),  # min longitude
-    round(lat - bbox_size, 4),   # min latitude
-    round(long + bbox_size, 4),  # max longitude
-    round(lat + bbox_size, 4)    # max latitude
-]
+bbox = f"{lon-bbox_size},{lat-bbox_size},{lon+bbox_size},{lat+bbox_size}"
 
-query_params = {
-    "access_token": mapillary_access_token,
+# Query parameters
+params = {
+    "access_token": ACCESS_TOKEN,
     "fields": "id",
-    "bbox": ",".join(map(str, bbox))
+    "bbox": bbox
 }
 
-# Construct and print the full request URL
-encoded_params = urlencode(query_params, safe=",|")
-full_url = f"{api_base_url}?{encoded_params}"
-print("Request URL:")
-print(full_url)
+# Make API request
+response = requests.get(API_BASE_URL, params=params)
+data = response.json()
 
-response = requests.get(api_base_url, params=query_params)
-response_data = response.json()
-first_image_id = response_data['data'][0]['id'] if response_data['data'] else None
-print("\nResponse data:")
-print(response_data)
+# Print request URL and response data
+print(f"Request URL:\n{response.url}\n")
+print(f"Response data:\n{data}")
+
+# Extract first image ID if available
+first_image_id = data['data'][0]['id'] if data.get('data') else None
+print(f"\nFirst image ID: {first_image_id}")
