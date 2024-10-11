@@ -69,16 +69,26 @@
             z-index: 1000;
             display: none;
         }
-        .ellipsis { animation: ellipsis-animation 2s steps(4, end) infinite; }
+        .ellipsis::after {
+            content: '...';
+            animation: ellipsis-animation 1.5s infinite;
+            display: inline-block;
+            width: 0;
+            overflow: hidden;
+        }
         @keyframes ellipsis-animation {
-            to { width: 1.25em; }
+            0% { width: 0; }
+            25% { width: 0.25em; }
+            50% { width: 0.5em; }
+            75% { width: 0.75em; }
+            100% { width: 1em; }
         }
     </style>
 </head>
 <body>
     <h1>GeoGuess Challenge</h1>
     <div id="mly"></div>
-    <div id="loading-indicator">Loading next location<span class="ellipsis">...</span></div>
+    <div id="loading-indicator">Loading next location<span class="ellipsis"></span></div>
     <div id="game-container">
         <div id="instructions">
             Guess the location! Enter either the capital city or the country name.<br>
@@ -115,7 +125,7 @@
         initializeViewer('{{ image }}');
 
         function toggleLoading(show) {
-            elements.loadingIndicator.style.display = show ? 'block' : 'none';
+            elements.loadingIndicator.style.display = show ? 'flex' : 'none';
             elements.guessInput.disabled = show;
             elements.submitGuess.disabled = show;
         }
