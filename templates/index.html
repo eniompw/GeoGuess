@@ -85,7 +85,7 @@
                 .catch(error => {
                     console.error('Error:', error);
                     if (retryCount < 2) {  // Try 3 times in total (0, 1, 2)
-                        elements.result.textContent = `An error occurred while loading the image. Retrying... (Attempt ${retryCount + 2}/5)`;
+                        elements.result.textContent = `An error occurred while loading the image. Retrying... (Attempt ${retryCount + 2}/3)`;
                         elements.result.style.color = "orange";
                         setTimeout(() => loadImage(retryCount + 1), 2000);
                     } else {
