@@ -73,7 +73,22 @@ def index():
     session['current_round'] = 0
     session['correct_answers'] = 0
     session['incorrect_tries'] = 0
-    return start_new_round()
+    return render_template('index.html', round=1)
+
+@app.route('/get_image')
+def get_image():
+    current_round = session.get('current_round', 0)
+    capital, image_id = get_city_for_round(current_round)
+    
+    if image_id:
+        session['current_capital'] = capital
+        location_name = f"{capital['Capital']}, {capital['Country']}"
+        return jsonify({
+            'image_id': image_id,
+            'location_name': location_name,
+            'round': current_round + 1
+        })
+    return jsonify({'error': 'No image found. Please try again!'})
 
 @app.route('/guess', methods=['POST'])
 def guess():

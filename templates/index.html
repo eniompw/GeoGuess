@@ -30,13 +30,13 @@
 <body>
     <h1>GeoGuess Challenge</h1>
     <div id="mly"></div>
-    <div id="loading-indicator">Loading next location<span class="ellipsis"></span></div>
+    <div id="loading-indicator">Loading location<span class="ellipsis"></span></div>
     <div id="game-container">
         <div id="instructions">Guess the location! Enter either the capital city or the country name.<br>There are 5 rounds of increasing difficulty. Can you guess them all?</div>
-        <div id="round-info">Round: <span id="current-round">{{ round }}</span> / 5</div>
+        <div id="round-info">Round: <span id="current-round">1</span> / 5</div>
         <div id="guess-form">
-            <input type="text" id="guess-input" placeholder="Enter a capital or country">
-            <button id="submit-guess" class="btn">Submit Guess</button>
+            <input type="text" id="guess-input" placeholder="Enter a capital or country" disabled>
+            <button id="submit-guess" class="btn" disabled>Submit Guess</button>
         </div>
         <div id="result"></div>
         <button id="new-game-btn" class="btn">New Game</button>
@@ -49,7 +49,8 @@
             submitGuess: document.getElementById('submit-guess'),
             guessInput: document.getElementById('guess-input'),
             result: document.getElementById('result'),
-            loadingIndicator: document.getElementById('loading-indicator')
+            loadingIndicator: document.getElementById('loading-indicator'),
+            currentRound: document.getElementById('current-round')
         };
 
         function initializeViewer(imageId) {
@@ -61,12 +62,37 @@
             });
         }
 
-        initializeViewer('{{ image }}');
-
         function toggleLoading(show) {
             elements.loadingIndicator.style.display = show ? 'flex' : 'none';
             elements.guessInput.disabled = elements.submitGuess.disabled = show;
         }
+
+        function loadImage() {
+            toggleLoading(true);
+            fetch('/get_image')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        elements.result.textContent = data.error;
+                        elements.result.style.color = "red";
+                    } else {
+                        initializeViewer(data.image_id);
+                        elements.currentRound.textContent = data.round;
+                        elements.guessInput.disabled = false;
+                        elements.submitGuess.disabled = false;
+                    }
+                    toggleLoading(false);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    elements.result.textContent = "An error occurred while loading the image. Please try again.";
+                    elements.result.style.color = "red";
+                    toggleLoading(false);
+                });
+        }
+
+        // Load the first image when the page loads
+        window.addEventListener('load', loadImage);
 
         function submitAnswer() {
             const guess = elements.guessInput.value.trim().toLowerCase();
