@@ -67,26 +67,32 @@
             elements.guessInput.disabled = elements.submitGuess.disabled = show;
         }
 
-        function loadImage() {
+        function loadImage(retryCount = 0) {
             toggleLoading(true);
             fetch('/get_image')
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
-                        elements.result.textContent = data.error;
-                        elements.result.style.color = "red";
+                        throw new Error(data.error);
                     } else {
                         initializeViewer(data.image_id);
                         elements.currentRound.textContent = data.round;
                         elements.guessInput.disabled = elements.submitGuess.disabled = false;
+                        elements.result.textContent = "";
                     }
                     toggleLoading(false);
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    elements.result.textContent = "An error occurred while loading the image. Please try again.";
-                    elements.result.style.color = "red";
-                    toggleLoading(false);
+                    if (retryCount < 2) {
+                        elements.result.textContent = `An error occurred while loading the image. Retrying... (Attempt ${retryCount + 2}/3)`;
+                        elements.result.style.color = "orange";
+                        setTimeout(() => loadImage(retryCount + 1), 2000);
+                    } else {
+                        elements.result.textContent = "Failed to load the image after 3 attempts. Please try starting a new game.";
+                        elements.result.style.color = "red";
+                        toggleLoading(false);
+                    }
                 });
         }
 
