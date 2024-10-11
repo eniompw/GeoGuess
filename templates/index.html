@@ -53,21 +53,21 @@
             currentRound: document.getElementById('current-round')
         };
 
-        function initializeViewer(imageId) {
+        const initializeViewer = imageId => {
             if (viewer) viewer.remove();
             viewer = new Viewer({
                 accessToken: 'API_KEY_HERE',
                 container: 'mly',
                 imageId: imageId,
             });
-        }
+        };
 
-        function toggleLoading(show) {
+        const toggleLoading = show => {
             elements.loadingIndicator.style.display = show ? 'flex' : 'none';
             elements.guessInput.disabled = elements.submitGuess.disabled = show;
-        }
+        };
 
-        function loadImage() {
+        const loadImage = () => {
             toggleLoading(true);
             fetch('/get_image')
                 .then(response => response.json())
@@ -78,8 +78,7 @@
                     } else {
                         initializeViewer(data.image_id);
                         elements.currentRound.textContent = data.round;
-                        elements.guessInput.disabled = false;
-                        elements.submitGuess.disabled = false;
+                        elements.guessInput.disabled = elements.submitGuess.disabled = false;
                     }
                     toggleLoading(false);
                 })
@@ -89,12 +88,9 @@
                     elements.result.style.color = "red";
                     toggleLoading(false);
                 });
-        }
+        };
 
-        // Load the first image when the page loads
-        window.addEventListener('load', loadImage);
-
-        function submitAnswer() {
+        const submitAnswer = () => {
             const guess = elements.guessInput.value.trim().toLowerCase();
             if (!guess) {
                 elements.result.textContent = "Please enter a guess before submitting.";
@@ -141,8 +137,9 @@
                 elements.result.style.color = "red";
                 elements.submitGuess.disabled = false;
             });
-        }
+        };
 
+        window.addEventListener('load', loadImage);
         elements.submitGuess.addEventListener('click', submitAnswer);
         elements.guessInput.addEventListener('keyup', event => { if (event.key === 'Enter') submitAnswer(); });
         document.getElementById('new-game-btn').addEventListener('click', () => { window.location.href = '/new_game'; });
