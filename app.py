@@ -61,13 +61,24 @@ def start_new_round():
     if current_round >= len(DIFFICULTY_RANGES):
         return render_template('game_over.html', score=session.get('correct_answers', 0))
     
-    capital, image_id = get_city_for_round(current_round)
+    max_attempts = 3
     
-    if image_id:
-        session['current_capital'] = capital
-        location_name = f"{capital['Capital']}, {capital['Country']}"
-        return render_template('index.html', image=image_id, round=current_round + 1, location_name=location_name)
-    return "No image found. Please try again!"
+    for attempt in range(max_attempts):
+        try:
+            capital, image_id = get_city_for_round(current_round)
+            
+            if image_id:
+                session['current_capital'] = capital
+                location_name = f"{capital['Capital']}, {capital['Country']}"
+                return render_template('index.html', image=image_id, round=current_round + 1, location_name=location_name)
+            
+        except requests.RequestException as e:
+            print(f"API request error (attempt {attempt + 1}): {str(e)}")
+        
+        time.sleep(1)  # Wait for 1 second before retrying
+    
+    # If all attempts fail, return an error page
+    return render_template('error.html', message="Unable to load the next round. Please try again.")
 
 @app.route('/')
 def index():
