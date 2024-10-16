@@ -4,6 +4,7 @@ import random
 import os
 from dotenv import load_dotenv
 import csv
+import time
 
 load_dotenv()
 
@@ -78,17 +79,31 @@ def index():
 @app.route('/get_image')
 def get_image():
     current_round = session.get('current_round', 0)
-    capital, image_id = get_city_for_round(current_round)
+    max_attempts = 3
     
-    if image_id:
-        session['current_capital'] = capital
-        location_name = f"{capital['Capital']}, {capital['Country']}"
-        return jsonify({
-            'image_id': image_id,
-            'location_name': location_name,
-            'round': current_round + 1
-        })
-    return jsonify({'error': 'No image found. Please try again!'})
+    for attempt in range(max_attempts):
+        try:
+            capital, image_id = get_city_for_round(current_round)
+            
+            if image_id:
+                session['current_capital'] = capital
+                location_name = f"{capital['Capital']}, {capital['Country']}"
+                return jsonify({
+                    'image_id': image_id,
+                    'location_name': location_name,
+                    'round': current_round + 1
+                })
+            
+        except requests.RequestException as e:
+            print(f"API request error (attempt {attempt + 1}): {str(e)}")
+        
+        time.sleep(1)  # Wait for 1 second before retrying
+    
+    # If all attempts fail, return a fallback response
+    return jsonify({
+        'error': 'Unable to fetch image. Please try again.',
+        'fallback': True
+    })
 
 @app.route('/guess', methods=['POST'])
 def guess():
