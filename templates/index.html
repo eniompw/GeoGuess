@@ -67,11 +67,22 @@
             elements.guessInput.disabled = elements.submitGuess.disabled = show;
         }
 
+        function handleResponse(response) {
+            if (response.error === 'Session expired') {
+                alert('Your session has expired. Starting a new game.');
+                window.location.href = response.redirect;
+                return null;
+            }
+            return response;
+        }
+
         function loadImage(retryCount = 0) {
             toggleLoading(true);
             fetch('/get_image')
                 .then(response => response.json())
+                .then(handleResponse)
                 .then(data => {
+                    if (!data) return;  // Session expired, redirect handled
                     if (data.error) {
                         throw new Error(data.error);
                     } else {
@@ -111,7 +122,9 @@
                 body: `guess=${encodeURIComponent(guess)}`
             })
             .then(response => response.json())
+            .then(handleResponse)
             .then(data => {
+                if (!data) return;  // Session expired, redirect handled
                 elements.result.textContent = data.message;
                 elements.result.style.color = data.correct ? "green" : "red";
                 

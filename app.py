@@ -5,11 +5,18 @@ import os
 from dotenv import load_dotenv
 import csv
 import time
+import logging
+from datetime import datetime, timedelta, timezone
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
+app.permanent_session_lifetime = timedelta(minutes=30)  # Set session timeout to 30 minutes
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Mapillary API configuration
 BASE_URL = "https://graph.mapillary.com/images"
@@ -80,15 +87,34 @@ def start_new_round():
     # If all attempts fail, return an error page
     return render_template('error.html', message="Unable to load the next round. Please try again.")
 
+def check_session():
+    if 'last_activity' not in session:
+        session['last_activity'] = datetime.now(timezone.utc)
+    elif datetime.now(timezone.utc) - session['last_activity'] > app.permanent_session_lifetime:
+        logger.info("Session expired")
+        return False
+    session['last_activity'] = datetime.now(timezone.utc)
+    return True
+
+@app.before_request
+def before_request():
+    session.permanent = True
+    if not check_session():
+        return jsonify({'error': 'Session expired', 'redirect': url_for('index')})
+
 @app.route('/')
 def index():
     session['current_round'] = 0
     session['correct_answers'] = 0
     session['incorrect_tries'] = 0
+    logger.info("New game started")
     return render_template('index.html', round=1)
 
 @app.route('/get_image')
 def get_image():
+    if not check_session():
+        return jsonify({'error': 'Session expired', 'redirect': url_for('index')})
+
     current_round = session.get('current_round', 0)
     max_attempts = 3
     
@@ -99,6 +125,7 @@ def get_image():
             if image_id:
                 session['current_capital'] = capital
                 location_name = f"{capital['Capital']}, {capital['Country']}"
+                logger.info(f"Image fetched for round {current_round + 1}: {location_name}")
                 return jsonify({
                     'image_id': image_id,
                     'location_name': location_name,
@@ -106,11 +133,11 @@ def get_image():
                 })
             
         except requests.RequestException as e:
-            print(f"API request error (attempt {attempt + 1}): {str(e)}")
+            logger.error(f"API request error (attempt {attempt + 1}): {str(e)}")
         
         time.sleep(1)  # Wait for 1 second before retrying
     
-    # If all attempts fail, return a fallback response
+    logger.error("Failed to fetch image after multiple attempts")
     return jsonify({
         'error': 'Unable to fetch image. Please try again.',
         'fallback': True
@@ -118,10 +145,15 @@ def get_image():
 
 @app.route('/guess', methods=['POST'])
 def guess():
+    if not check_session():
+        return jsonify({'error': 'Session expired', 'redirect': url_for('index')})
+
     user_guess = request.form['guess'].lower().strip()
     current_capital = session.get('current_capital')
     current_round = session.get('current_round', 0)
     incorrect_tries = session.get('incorrect_tries', 0)
+    
+    logger.info(f"Guess received: {user_guess}")
     
     if current_capital:
         correct_capital = current_capital['Capital'].lower()
@@ -158,10 +190,13 @@ def guess():
                     'tries_left': 3 - incorrect_tries
                 })
     else:
+        logger.error("No current capital in session")
         return jsonify({'error': 'No current capital in session'})
 
 @app.route('/next_round')
 def next_round():
+    if not check_session():
+        return jsonify({'error': 'Session expired', 'redirect': url_for('index')})
     return start_new_round()
 
 @app.route('/new_game')
@@ -169,6 +204,7 @@ def new_game():
     session['current_round'] = 0
     session['correct_answers'] = 0
     session['incorrect_tries'] = 0
+    logger.info("New game started")
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
