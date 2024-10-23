@@ -40,7 +40,8 @@ def get_image_id(lat, lon, initial_delta=0.001, max_attempts=5):
         params = {
             "access_token": ACCESS_TOKEN,
             "fields": "id",
-            "bbox": bbox
+            "bbox": bbox,
+            "limit": 10  # Limit the number of returned image IDs to 10
         }
         
         try:
