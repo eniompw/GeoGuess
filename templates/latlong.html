@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Mapbox Click Event Example</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.12.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.12.0/mapbox-gl.css" rel="stylesheet" />
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        // Set your Mapbox access token here
+        mapboxgl.accessToken = 'pk.eyJ1IjoiZW5pb21wdyIsImEiOiJja3g3cXV4aGQwM3R5Mm9zZW1yZ3Bqa3R4In0.wZGaKgHrpTn0TwtWwiTX-g';
+
+        // Initialize the map
+        const map = new mapboxgl.Map({
+            container: 'map', // Container ID
+            style: 'mapbox://styles/mapbox/streets-v11', // Map style to use
+            center: [-74.5, 40], // Initial map center in [lon, lat]
+            zoom: 9 // Initial map zoom level
+        });
+
+        // Add a click event listener to the map
+        map.on('click', (event) => {
+            // Get the latitude and longitude from the event object
+            const { lng, lat } = event.lngLat;
+            fetch(`/latlong?lat=${lat}&long=${lng}`, {
+                method: 'GET'
+            });
+
+            // Log the coordinates to the console
+            console.log(`Latitude: ${lat}, Longitude: ${lng}`);
+            
+            // Optionally, you can display the coordinates on the map
+            new mapboxgl.Popup()
+                .setLngLat([lng, lat])
+                .setHTML(`Latitude: ${lat}<br>Longitude: ${lng}`)
+                .addTo(map);
+        });
+    </script>
+</body>
+</html>

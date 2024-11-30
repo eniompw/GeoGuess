@@ -111,6 +111,17 @@ def index():
     logger.info("New game started")
     return render_template('index.html', round=1)
 
+@app.route('/map')
+def map():
+    return render_template('latlong.html')
+
+@app.route('/latlong')
+def latlong():
+    lat = request.args.get('lat')
+    long = request.args.get('long')
+    print(lat,long)
+    return lat + " : " + long
+
 @app.route('/get_image')
 def get_image():
     if not check_session():
