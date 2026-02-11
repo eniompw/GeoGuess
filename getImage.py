@@ -1,7 +1,7 @@
 import requests
 
 API_BASE_URL = "https://graph.mapillary.com"
-ACCESS_TOKEN = "API_KEY_HERE"
+ACCESS_TOKEN = "API_KEY_HERE"  # Replace with your actual Mapillary API key
 
 def get_image_by_key(image_key):
     """Fetch and download an image from Mapillary API using its image key."""

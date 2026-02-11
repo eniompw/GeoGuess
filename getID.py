@@ -2,7 +2,7 @@ import requests
 
 # API configuration
 API_BASE_URL = "https://graph.mapillary.com/images"
-ACCESS_TOKEN = "API_KEY_HERE"
+ACCESS_TOKEN = "API_KEY_HERE"  # Replace with your actual Mapillary API key
 
 # Center point and bounding box
 lat, lon = 51.5078, -0.1277
