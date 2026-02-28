@@ -56,7 +56,7 @@
         function initializeViewer(imageId) {
             if (viewer) viewer.remove();
             viewer = new Viewer({
-                accessToken: 'API_KEY_HERE',
+                accessToken: '{{ access_token }}',
                 container: 'mly',
                 imageId: imageId,
             });

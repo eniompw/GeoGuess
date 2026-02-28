@@ -78,7 +78,7 @@ def start_new_round():
             if image_id:
                 session['current_capital'] = capital
                 location_name = f"{capital['Capital']}, {capital['Country']}"
-                return render_template('index.html', image=image_id, round=current_round + 1, location_name=location_name)
+                return render_template('index.html', image=image_id, round=current_round + 1, location_name=location_name, access_token=ACCESS_TOKEN)
             
         except requests.RequestException as e:
             print(f"API request error (attempt {attempt + 1}): {str(e)}")
@@ -109,7 +109,7 @@ def index():
     session['correct_answers'] = 0
     session['incorrect_tries'] = 0
     logger.info("New game started")
-    return render_template('index.html', round=1)
+    return render_template('index.html', round=1, access_token=ACCESS_TOKEN)
 
 @app.route('/map')
 def map():
