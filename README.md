@@ -5,7 +5,6 @@ A web application that tests users' geography knowledge using street view images
 ## Features
 
 - Random selection from 195 world capitals
-- Search functionality for specific locations
 - Interactive street view images via Mapillary API
 - Progressive difficulty: 5 rounds based on GDP rankings
 - Three attempts per location guess
@@ -15,6 +14,8 @@ A web application that tests users' geography knowledge using street view images
 - `app.py`: Main Flask application
 - `capitals_sorted_by_gdp.csv`: World capitals data
 - `templates/`: HTML templates
+- `getID.py`: Utility script to look up Mapillary image IDs by coordinates
+- `getImage.py`: Utility script to download Mapillary images by ID
 - `vercel.json`: Vercel deployment configuration
 
 ## Setup and Running
@@ -22,7 +23,10 @@ A web application that tests users' geography knowledge using street view images
 1. Clone the repository and navigate to the project directory
 2. Create and activate a virtual environment
 3. Install dependencies: `pip install -r requirements.txt`
-4. Set up `.env` file with your Mapillary access token
+4. Create a `.env` file with your Mapillary access token:
+   ```
+   MAPILLARY_ACCESS_TOKEN=your_token_here
+   ```
 5. Run the app: `python app.py`
 6. Open `http://localhost:5000` in your browser
 
